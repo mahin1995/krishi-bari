@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="bn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#8E3E2B">
+  <meta name="description" content="কৃষি বাড়িতে খুঁজে নিন মাশরুম, সরিষার তেল ও দেশি কৃষিপণ্য।">
+  <title>কৃষি বাড়ি — দেশি কৃষিপণ্যের দোকান</title>
+  <link rel="icon" href="assets/krishi-bari.svg?v=lal-mati" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="store.css">
+  <script src="store.js" defer></script>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" class="icon-defs" aria-hidden="true">
+  <symbol id="leaf" viewBox="0 0 24 24"><path d="M20 4c-1 2-4 1-7 2-5 1-8 4-7 8s6 5 9 3c4-3 5-7 5-13ZM4 20c3-4 6-7 10-9"/></symbol>
+  <symbol id="bag" viewBox="0 0 24 24"><path d="M5 8h14l1.5 13h-17L5 8Zm4 2V6a3 3 0 1 1 6 0v4"/></symbol>
+  <symbol id="search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.3"/><path d="m16 16 4 4"/></symbol>
+  <symbol id="left" viewBox="0 0 24 24"><path d="M4 12h15m-6-6 6 6-6 6"/></symbol>
+  <symbol id="grid" viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></symbol>
+  <symbol id="mushroom" viewBox="0 0 24 24"><path d="M3 12a9 8 0 0 1 18 0c0 2-3 2-9 2s-9 0-9-2Zm7 2-1 5c0 2 6 2 6 0l-1-5M7 10h.01M12 7h.01M16 10h.01"/></symbol>
+  <symbol id="drop" viewBox="0 0 24 24"><path d="M12 3C9 7 5 11 5 15a7 7 0 1 0 14 0c0-4-4-8-7-12ZM8.5 15c0 2 1 3 3 3"/></symbol>
+  <symbol id="grain" viewBox="0 0 24 24"><path d="M12 21V7m0 2c-3 0-4-3 0-7 4 4 3 7 0 7Zm0 5c-5 0-8-2-8-7 5 0 8 3 8 7Zm0 0c5 0 8-2 8-7-5 0-8 3-8 7Zm0 5c-5 0-8-2-8-6 5 0 8 2 8 6Zm0 0c5 0 8-2 8-6-5 0-8 2-8 6Z"/></symbol>
+  <symbol id="jar" viewBox="0 0 24 24"><path d="M8 4h8v4H8zm0 4-3 4v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7l-3-4M5 13h14m-14 4h14"/></symbol>
+  <symbol id="box" viewBox="0 0 24 24"><path d="m3 7 9-4 9 4v10l-9 4-9-4V7Zm0 0 9 4 9-4m-9 4v10M7 5l9 4"/></symbol>
+  <symbol id="truck" viewBox="0 0 24 24"><path d="M2 5h13v12H2zm13 5h4l3 4v3h-7"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></symbol>
+  <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+</svg>
+<div class="notice"><svg class="icon"><use href="#leaf"/></svg> দেশি কৃষিপণ্যের অনলাইন বাজার <span>·</span> প্রিভিউ সংস্করণ</div>
+<header class="site-header">
+  <div class="shell header-inner">
+    <a class="brand" href="#" aria-label="কৃষি বাড়ি, প্রচ্ছদ">
+      <img class="brand-mark" src="assets/krishi-bari.svg?v=lal-mati" alt="" width="44" height="44">
+      <span><strong>কৃষি বাড়ি</strong><small>দেশি কৃষিপণ্যের দোকান</small></span>
+    </a>
+    <nav aria-label="মূল মেনু"><a class="nav-active" href="#">প্রচ্ছদ</a><a href="#products">সকল পণ্য</a><a href="#categories">ক্যাটাগরি</a><a href="#about">আমাদের কথা</a></nav>
+    <div class="header-actions">
+      <button class="icon-button" id="search-button" type="button" aria-label="পণ্য খুঁজুন" title="পণ্য খুঁজুন"><svg class="icon"><use href="#search"/></svg></button>
+      <button class="cart-button" id="cart-button" type="button"><svg class="icon"><use href="#bag"/></svg><span class="cart-label">কার্ট</span><span class="cart-count" id="cart-count">০</span></button>
+    </div>
+  </div>
+</header>
+<main>
+  <div class="shell hero-shell">
+    <section class="hero" aria-labelledby="hero-heading">
+      <div class="hero-copy">
+        <div class="eyebrow hero-kicker"><span></span> মাঠের স্বাদ, ঘরের রান্নায়</div>
+        <h1 id="hero-heading">মাটির ঘ্রাণ,<br><em>ঘরের স্বাদ।</em></h1>
+        <p>অয়েস্টার মাশরুম, ঘানির সরিষার তেল আর নিত্যদিনের দেশি কৃষিপণ্য। আপনার রান্নাঘরের জন্য এক জায়গায়।</p>
+        <a class="button hero-button" href="#products">পণ্য দেখুন <svg class="icon"><use href="#left"/></svg></a>
+      </div>
+      <div class="hero-visual">
+        <img src="assets/hero.webp" alt="বেতের ঝুড়িতে অয়েস্টার মাশরুম, পাশে সরিষার তেলের বোতল ও সরিষা ফুল" fetchpriority="high" width="960" height="650">
+        <span class="photo-label"><i></i> মাশরুম ও সরিষার তেল</span>
+      </div>
+    </section>
+    <div class="benefits" aria-label="দোকানের বৈশিষ্ট্য">
+      <div><span class="benefit-icon"><svg class="icon"><use href="#leaf"/></svg></span><span><strong>দেশি কৃষিপণ্য</strong><small>রান্নাঘরের পরিচিত উপকরণ</small></span></div>
+      <div><span class="benefit-icon"><svg class="icon"><use href="#box"/></svg></span><span><strong>পরিমাণ দেখে কিনুন</strong><small>প্রতিটি পণ্যের ওজন ও দাম দেখুন</small></span></div>
+      <div><span class="benefit-icon"><svg class="icon"><use href="#truck"/></svg></span><span><strong>ডেলিভারি হিসাব</strong><small>এলাকা অনুযায়ী খরচ দেখুন</small></span></div>
+    </div>
+  </div>
+  <section class="shell category-section" id="categories" aria-labelledby="category-heading">
+    <div class="section-intro"><div class="eyebrow"><span></span> পণ্যের বিভাগ</div><h2 id="category-heading">কী খুঁজছেন?</h2></div>
+    <div class="category-list" id="category-list"></div>
+  </section>
+  <section class="products-section" id="products" aria-labelledby="products-heading">
+    <div class="shell">
+      <div class="catalog-head">
+        <div class="section-intro"><div class="eyebrow"><span></span> কৃষি বাড়ির সংগ্রহ</div><h2 id="products-heading">আমাদের পণ্য</h2><p>মাশরুম ও সরিষার তেল থেকে শুরু করে রান্নাঘরের নিত্যপ্রয়োজনীয় উপকরণ।</p></div>
+        <div class="catalog-controls">
+          <label class="search-field"><svg class="icon"><use href="#search"/></svg><input id="product-search" type="search" placeholder="পণ্য খুঁজুন" aria-label="পণ্য খুঁজুন"></label>
+          <select id="sort" aria-label="পণ্য সাজান">
+            <option value="featured">বাছাই করা পণ্য</option><option value="low">দাম কম থেকে বেশি</option><option value="high">দাম বেশি থেকে কম</option>
+          </select>
+        </div>
+      </div>
+      <div class="catalog-status"><span id="result-count" aria-live="polite"></span><button id="reset-filters" class="text-button" type="button" hidden>ফিল্টার মুছুন</button></div>
+      <div id="product-grid" class="product-grid"></div>
+    </div>
+  </section>
+  <section class="shell about-section" id="about">
+    <div class="about-inner"><img src="assets/krishi-bari.svg?v=lal-mati" width="65" height="65" alt=""><div><div class="eyebrow"><span></span> আমাদের কথা</div><h2>দেশি কৃষিপণ্য, এক ঠিকানায়</h2><p>কৃষি বাড়িতে মাশরুম, সরিষার তেল, মধু, মসলা, চাল ও ডালের মতো রান্নাঘরের পরিচিত উপকরণ একসঙ্গে খুঁজে পাবেন।</p></div><a href="#products" class="button secondary">সংগ্রহ দেখুন <svg class="icon"><use href="#left"/></svg></a></div>
+  </section>
+</main>
+<footer><div class="shell footer-inner"><a class="brand" href="#"><img class="brand-mark" src="assets/krishi-bari.svg?v=lal-mati" alt="" width="40" height="40"><span><strong>কৃষি বাড়ি</strong><small>দেশি কৃষিপণ্যের দোকান</small></span></a><p>প্রিভিউ · পণ্য, দাম ও ডেলিভারি চার্জ নমুনা হিসেবে দেওয়া হয়েছে।</p><a href="#categories">ক্যাটাগরি দেখুন ↑</a></div></footer>
+<dialog id="detail-dialog" class="detail-dialog" aria-labelledby="detail-title"></dialog>
+<dialog id="cart-dialog" class="cart-dialog" aria-labelledby="cart-title">
+  <div class="drawer-header"><div><span class="eyebrow">কৃষি বাড়ি</span><h2 id="cart-title">আপনার কার্ট</h2></div><button class="icon-button" type="button" id="close-cart" aria-label="কার্ট বন্ধ করুন"><svg class="icon"><use href="#close"/></svg></button></div>
+  <div id="cart-content"></div>
+</dialog>
+<div id="toast" class="toast" role="status"></div>
+</body>
+</html>
