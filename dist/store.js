@@ -25,11 +25,13 @@ const money = (n) => '৳' + number(n);
 const icon = (name) => '<svg class="icon" aria-hidden="true"><use href="#' + name + '"/></svg>';
 const productMap = new Map(products.map((product) => [product.id, product]));
 const imagePath = (id) => 'assets/' + id + '.webp';
+const productPath = (id) => 'product.html?id=' + encodeURIComponent(id);
+const detail = $('product-detail');
+const browsePath = detail ? './#products' : '#products';
 const shippingFees = {dhaka:70, outside:130};
 const cart = readCart();
 const search = $('product-search');
 const sort = $('sort');
-const detailDialog = $('detail-dialog');
 const cartDialog = $('cart-dialog');
 const cartContent = $('cart-content');
 let category = 'all';
@@ -53,6 +55,10 @@ function saveCart() {
   } catch {
     // The current tab still retains the cart when storage is unavailable.
   }
+  updateCartCount();
+}
+
+function updateCartCount() {
   const itemCount = number([...cart.values()].reduce((sum, count) => sum + count, 0));
   $('cart-count').textContent = itemCount;
   $('cart-button').setAttribute('aria-label', 'কার্ট, ' + itemCount + 'টি পণ্য');
@@ -65,8 +71,8 @@ function setQuantity(id, quantity) {
   saveCart();
 }
 
-function addProduct(id) {
-  setQuantity(id, (cart.get(id) || 0) + 1);
+function addProduct(id, count = 1) {
+  setQuantity(id, (cart.get(id) || 0) + count);
   const toast = $('toast');
   toast.textContent = productMap.get(id).name + ' কার্টে যোগ হয়েছে';
   toast.classList.add('visible');
@@ -97,41 +103,120 @@ function renderProducts() {
   $('reset-filters').hidden = category === 'all' && !query && sort.value === 'featured';
   $('product-grid').innerHTML = filtered.length ? filtered.map((product) => `
     <article class="product">
-      <button type="button" class="product-image" data-detail="${product.id}" aria-label="${product.name} সম্পর্কে দেখুন">
+      <a class="product-image" href="${productPath(product.id)}" aria-label="${product.name} বিস্তারিত দেখুন">
         <img src="${imagePath(product.id)}" alt="" loading="lazy" width="508" height="508">
         ${product.badge ? '<span class="tag">' + product.badge + '</span>' : ''}
-      </button>
+        <span class="model-badge">৩৬০°</span>
+      </a>
       <div class="product-info">
-        <h3><button class="product-name" type="button" data-detail="${product.id}">${product.name}</button></h3>
+        <h3><a class="product-name" href="${productPath(product.id)}">${product.name}</a></h3>
         <p class="pack">${product.pack}</p>
-        <div class="product-bottom"><span class="price">${money(product.price)}</span><button type="button" class="button primary add-button" data-add="${product.id}" aria-label="${product.name} কার্টে যোগ করুন">${icon('plus')} কার্টে যোগ</button></div>
+        <div class="product-bottom"><span class="price">${money(product.price)}</span><a class="text-button detail-link" href="${productPath(product.id)}">বিস্তারিত</a></div>
+        <div class="product-actions">
+          <button type="button" class="button primary" data-order="${product.id}" aria-label="${product.name} এখনই অর্ডার করুন">এখনই অর্ডার</button>
+          <button type="button" class="button secondary add-button" data-add="${product.id}" aria-label="${product.name} কার্টে যোগ করুন">${icon('bag')} কার্টে যোগ</button>
+        </div>
       </div>
     </article>`).join('') : '<p class="empty">কোনো পণ্য পাওয়া যায়নি। অন্য শব্দ দিয়ে খুঁজে দেখুন।</p>';
 }
 
-function showProduct(id) {
-  const product = productMap.get(id);
-  detailDialog.innerHTML = `
-    <article class="detail-card">
-      <img src="${imagePath(id)}" alt="${product.name}">
-      <button type="button" class="icon-button detail-close" data-close aria-label="পণ্যের বিবরণ বন্ধ করুন">${icon('close')}</button>
-      <div class="detail-copy"><div class="eyebrow">পণ্যের বিবরণ</div>
-        <h2 id="detail-title">${product.name}</h2><p>${product.pack} · নমুনা পণ্য</p>
-        <p>${product.description}</p><div class="price">${money(product.price)}</div>
-        <button class="button primary" type="button" data-detail-add="${id}">${icon('plus')} কার্টে যোগ করুন</button>
+function renderDetail() {
+  const product = productMap.get(new URLSearchParams(location.search).get('id'));
+  if (!product) {
+    detail.innerHTML = '<section class="empty"><h1>পণ্য পাওয়া যায়নি</h1><a class="button primary" href="./#products">সব পণ্য দেখুন</a></section>';
+    return;
+  }
+  const {id, name, pack, price, description} = product;
+  document.title = name + ' — কৃষি বাড়ি';
+  document.querySelector('meta[name="description"]').content = description;
+  detail.innerHTML = `
+    <article class="product-detail">
+      <div class="detail-gallery">
+        <div class="gallery-stage">
+          <img id="detail-photo" src="${imagePath(id)}" alt="${name}" width="508" height="508" fetchpriority="high">
+          <div id="detail-model" class="model-stage" hidden>
+            <canvas id="product-canvas" width="540" height="440" role="img" aria-label="${name}, ঘুরিয়ে দেখার ৩ডি নমুনা"></canvas>
+            <div class="model-controls">
+              <button class="icon-button" type="button" data-rotate="-1" aria-label="বামে ঘোরান">↶</button>
+              <button class="icon-button" type="button" data-rotate="1" aria-label="ডানে ঘোরান">↷</button>
+            </div>
+          </div>
+        </div>
+        <div class="gallery-actions" role="group" aria-label="পণ্য দেখার ধরন">
+          <button class="button secondary" id="view-photo" type="button" aria-pressed="true">পণ্যের ছবি</button>
+          <button class="button secondary" id="view-model" type="button" aria-pressed="false">৩৬০° ঘুরিয়ে দেখুন</button>
+        </div>
+        <p id="model-help" class="pack model-help" role="status">বিভিন্ন দিক দেখতে ‘৩৬০° ঘুরিয়ে দেখুন’ চাপুন।</p>
+      </div>
+      <div class="detail-copy">
+        <div class="eyebrow"><span></span> পণ্যের বিস্তারিত</div>
+        <h1>${name}</h1>
+        <p class="detail-pack">${pack} প্রতি প্যাক</p>
+        <p class="detail-description">${description}</p>
+        <div class="detail-quantity">
+          <strong>কয়টি প্যাক নেবেন?</strong>
+          <div class="quantity">
+            <button type="button" data-detail-qty="-1" aria-label="পরিমাণ কমান" disabled>−</button>
+            <output id="detail-qty" aria-live="polite">১</output>
+            <button type="button" data-detail-qty="1" aria-label="পরিমাণ বাড়ান">+</button>
+          </div>
+        </div>
+        <div class="detail-price"><span>পণ্যের মোট</span><strong class="price" id="detail-price">${money(price)}</strong></div>
+        <div class="detail-actions">
+          <button class="button primary" id="order-product" type="button">এখনই অর্ডার করুন ${icon('left')}</button>
+          <button class="button secondary" id="add-product" type="button">${icon('bag')} কার্টে যোগ করুন</button>
+        </div>
+        <p class="delivery-note">${icon('truck')} ঠিকানা দেওয়ার সময় ডেলিভারি খরচ দেখানো হবে।</p>
       </div>
     </article>`;
-  detailDialog.showModal();
+  let quantity = 1;
+  const quantityButtons = detail.querySelectorAll('[data-detail-qty]');
+  quantityButtons.forEach(button => button.addEventListener('click', () => {
+    quantity = Math.max(1, Math.min(99, quantity + Number(button.dataset.detailQty)));
+    $('detail-qty').textContent = number(quantity);
+    $('detail-price').textContent = money(price * quantity);
+    quantityButtons[0].disabled = quantity === 1;
+    quantityButtons[1].disabled = quantity === 99;
+  }));
+  $('order-product').addEventListener('click', () => orderProduct(id, quantity));
+  $('add-product').addEventListener('click', () => addProduct(id, quantity));
+
+  let viewer;
+  function showView(model) {
+    $('detail-photo').hidden = model;
+    $('detail-model').hidden = !model;
+    $('view-photo').setAttribute('aria-pressed', String(!model));
+    $('view-model').setAttribute('aria-pressed', String(model));
+    $('model-help').textContent = model
+      ? 'আঙুল দিয়ে টানুন বা তীর চাপুন। এটি পণ্যের আকৃতি বোঝার জন্য ৩ডি নমুনা।'
+      : 'বিভিন্ন দিক দেখতে ‘৩৬০° ঘুরিয়ে দেখুন’ চাপুন।';
+  }
+  $('view-photo').addEventListener('click', () => showView(false));
+  $('view-model').addEventListener('click', () => {
+    showView(true);
+    if (!viewer && typeof mountProductModel === 'function') viewer = mountProductModel($('product-canvas'), id);
+    if (!viewer) {
+      showView(false);
+      $('model-help').textContent = 'এই ডিভাইসে ৩ডি ভিউ চালু করা যায়নি। পণ্যের ছবি দেখতে পারবেন।';
+    }
+  });
+  detail.querySelectorAll('[data-rotate]').forEach(button => button.addEventListener('click', () => {
+    viewer?.rotate(Number(button.dataset.rotate));
+  }));
 }
 
-function subtotal() {
-  return [...cart].reduce((sum, [id,count]) => sum + productMap.get(id).price * count, 0);
+function subtotal(items = cart) {
+  return [...items].reduce((sum, [id,count]) => sum + productMap.get(id).price * count, 0);
+}
+
+function orderProduct(id, quantity = 1) {
+  showCheckout(new Map([[id, quantity]]));
 }
 
 function showCart() {
   $('cart-title').textContent = 'আপনার কার্ট';
   if (cart.size === 0) {
-    cartContent.innerHTML = '<p class="empty">আপনার কার্ট খালি।</p><a class="button primary cart-wide" href="#products" data-browse>পণ্য দেখুন</a>';
+    cartContent.innerHTML = `<p class="empty">আপনার কার্ট খালি।</p><a class="button primary cart-wide" href="${browsePath}" data-browse>পণ্য দেখুন</a>`;
     return;
   }
   const rows = [...cart].map(([id,count]) => {
@@ -149,81 +234,89 @@ function showCart() {
     <div class="cart-lines">${rows}</div>
     <div class="total-line"><span>পণ্যের মোট</span><strong>${money(subtotal())}</strong></div>
     <p class="pack">ডেলিভারি চার্জ চেকআউটে যোগ হবে।</p>
-    <button class="button primary cart-wide" type="button" data-checkout>চেকআউট দেখুন ${icon('left')}</button>`;
+    <button class="button primary cart-wide" type="button" data-checkout>অর্ডার করতে ঠিকানা দিন ${icon('left')}</button>`;
 }
 
-function showCheckout() {
-  $('cart-title').textContent = 'চেকআউট';
+function showCheckout(items = cart) {
+  const direct = items !== cart;
+  const itemTotal = subtotal(items);
+  const summary = [...items].map(([id, count]) => {
+    const product = productMap.get(id);
+    return `<li><span>${product.name} · ${number(count)} প্যাক</span><strong>${money(product.price * count)}</strong></li>`;
+  }).join('');
+  $('cart-title').textContent = 'অর্ডারের ঠিকানা';
   cartContent.innerHTML = `
     <form class="checkout" id="checkout-form">
-      <p class="checkout-note">এটি নমুনা চেকআউট। পরীক্ষার জন্য নমুনা তথ্য ব্যবহার করুন। লাইভ অর্ডার ও পেমেন্ট প্রিভিউয়ের বাইরে।</p>
-      <label>নাম<input name="name" type="text" required maxlength="100"></label>
-      <label>মোবাইল নম্বর<input name="phone" type="tel" inputmode="tel" required pattern="(?:[+]88)?[০0][১1][০-৯0-9]{9}" title="০১ দিয়ে শুরু ১১ সংখ্যার মোবাইল নম্বর দিন" placeholder="০১XXXXXXXXX"></label>
-      <label>ডেলিভারির ঠিকানা<textarea name="address" required maxlength="400"></textarea></label>
+      <p class="checkout-note">ডেমো অর্ডার। ফর্মটি পরীক্ষা করতে নমুনা তথ্য দিন।</p>
+      <ul class="checkout-items" aria-label="অর্ডারের পণ্য">${summary}</ul>
+      <label>আপনার নাম<input name="name" type="text" autocomplete="name" required maxlength="100"></label>
+      <label>মোবাইল নম্বর<input name="phone" type="tel" inputmode="tel" autocomplete="tel" required pattern="(?:[+]88)?[০0][১1][০-৯0-9]{9}" title="০১ দিয়ে শুরু ১১ সংখ্যার মোবাইল নম্বর দিন" placeholder="০১XXXXXXXXX"></label>
+      <label>পুরো ঠিকানা<textarea name="address" autocomplete="street-address" required maxlength="400" placeholder="বাসা, রাস্তা, এলাকা ও জেলা"></textarea></label>
       <label>ডেলিভারি এলাকা<select name="zone"><option value="dhaka">ঢাকা শহর</option><option value="outside">ঢাকার বাইরে</option></select></label>
-      <div>
-        <div class="total-line"><span>পণ্যের মোট</span><strong>${money(subtotal())}</strong></div>
-        <div class="total-line"><span>নমুনা ডেলিভারি চার্জ</span><strong id="shipping-fee"></strong></div>
-        <div class="total-line cart-total"><span>সর্বমোট</span><strong id="checkout-total"></strong></div>
+      <div aria-live="polite">
+        <div class="total-line"><span>পণ্যের মোট</span><strong>${money(itemTotal)}</strong></div>
+        <div class="total-line"><span>ডেলিভারি চার্জ</span><strong id="shipping-fee"></strong></div>
+        <div class="total-line cart-total"><span>ডেলিভারিসহ মোট</span><strong id="checkout-total"></strong></div>
       </div>
-      <button class="button primary" type="submit">নমুনা অর্ডার যাচাই করুন</button>
-      <button class="text-button" type="button" data-back>কার্টে ফিরুন</button>
+      <button class="button primary" type="submit">ডেমো অর্ডার সম্পন্ন করুন</button>
+      ${direct ? '<button class="text-button" type="button" data-cancel>পণ্য দেখা চালিয়ে যান</button>' : '<button class="text-button" type="button" data-back>কার্টে ফিরুন</button>'}
     </form>`;
   const form = $('checkout-form');
   const zone = form.elements.zone;
   const updateTotals = () => {
     const fee = shippingFees[zone.value];
     $('shipping-fee').textContent = money(fee);
-    $('checkout-total').textContent = money(subtotal() + fee);
+    $('checkout-total').textContent = money(itemTotal + fee);
   };
   zone.addEventListener('change', updateTotals);
   form.addEventListener('submit', (event) => {
     event.preventDefault();
-    const total = subtotal() + shippingFees[zone.value];
-    $('cart-title').textContent = 'নমুনা অর্ডারের সারাংশ';
+    const total = itemTotal + shippingFees[zone.value];
+    $('cart-title').textContent = 'ডেমো অর্ডার সম্পন্ন';
     cartContent.innerHTML = `
-      <p class="checkout-note">আপনার নমুনা চেকআউট সম্পন্ন হয়েছে।</p>
+      <p class="checkout-note">আপনার ডেমো চেকআউট সম্পন্ন হয়েছে।</p>
+      <ul class="checkout-items">${summary}</ul>
       <div class="total-line cart-total"><span>ডেলিভারিসহ মোট</span><strong>${money(total)}</strong></div>
-      <button class="button primary cart-wide" type="button" data-back>কার্টে ফিরুন</button>`;
+      <button class="button primary cart-wide" type="button" data-cancel>পণ্য দেখা চালিয়ে যান</button>`;
     cartContent.querySelector('button').focus();
   });
   updateTotals();
-  form.elements.name.focus();
+  if (!cartDialog.open) cartDialog.showModal();
+  $('close-cart').focus();
 }
 
-$('category-list').innerHTML = categories.map(([id,label,symbol,color]) => `
-  <button class="category-button" type="button" data-category="${id}" style="--category-color:${color}" aria-pressed="false">
-    <span class="category-icon">${icon(symbol)}</span>${label}
-  </button>`).join('');
+if (detail) {
+  renderDetail();
+} else {
+  $('category-list').innerHTML = categories.map(([id,label,symbol,color]) => `
+    <button class="category-button" type="button" data-category="${id}" style="--category-color:${color}" aria-pressed="false">
+      <span class="category-icon">${icon(symbol)}</span>${label}
+    </button>`).join('');
 
-$('category-list').addEventListener('click', (event) => {
-  const button = event.target.closest('[data-category]');
-  if (!button) return;
-  category = button.dataset.category;
-  search.value = '';
+  $('category-list').addEventListener('click', (event) => {
+    const button = event.target.closest('[data-category]');
+    if (!button) return;
+    category = button.dataset.category;
+    search.value = '';
+    renderProducts();
+    $('products').scrollIntoView();
+  });
+  $('reset-filters').addEventListener('click', resetFilters);
+  search.addEventListener('input', renderProducts);
+  sort.addEventListener('change', renderProducts);
+  $('search-button').addEventListener('click', () => {
+    $('products').scrollIntoView();
+    search.focus({preventScroll:true});
+  });
+  $('product-grid').addEventListener('click', (event) => {
+    const button = event.target.closest('button');
+    if (button?.dataset.add) addProduct(button.dataset.add);
+    if (button?.dataset.order) orderProduct(button.dataset.order);
+  });
   renderProducts();
-  $('products').scrollIntoView();
-});
-$('reset-filters').addEventListener('click', resetFilters);
-search.addEventListener('input', renderProducts);
-sort.addEventListener('change', renderProducts);
-$('search-button').addEventListener('click', () => {
-  $('products').scrollIntoView();
-  search.focus({preventScroll:true});
-});
-$('product-grid').addEventListener('click', (event) => {
-  const button = event.target.closest('button');
-  if (button?.dataset.detail) showProduct(button.dataset.detail);
-  if (button?.dataset.add) addProduct(button.dataset.add);
-});
-detailDialog.addEventListener('click', (event) => {
-  const button = event.target.closest('button');
-  if (event.target === detailDialog || button?.hasAttribute('data-close')) detailDialog.close();
-  if (button?.dataset.detailAdd) {
-    detailDialog.close();
-    addProduct(button.dataset.detailAdd);
-  }
-});
+}
+if (detail) $('search-button').addEventListener('click', () => location.assign('./#products'));
+
 $('cart-button').addEventListener('click', () => {
   showCart();
   cartDialog.showModal();
@@ -243,11 +336,17 @@ cartContent.addEventListener('click', (event) => {
     (next || cartContent.querySelector('button, a') || $('close-cart')).focus();
   }
   if (button.hasAttribute('data-checkout')) showCheckout();
+  if (button.hasAttribute('data-cancel')) cartDialog.close();
   if (button.hasAttribute('data-back')) {
     showCart();
     cartContent.querySelector('[data-checkout]')?.focus();
   }
 });
 
-renderProducts();
-saveCart();
+window.addEventListener('pageshow', event => {
+  if (!event.persisted) return;
+  cart.clear();
+  for (const [id, count] of readCart()) cart.set(id, count);
+  updateCartCount();
+});
+updateCartCount();
