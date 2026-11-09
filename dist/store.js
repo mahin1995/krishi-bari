@@ -106,7 +106,6 @@ function renderProducts() {
       <a class="product-image" href="${productPath(product.id)}" aria-label="${product.name} বিস্তারিত দেখুন">
         <img src="${imagePath(product.id)}" alt="" loading="lazy" width="508" height="508">
         ${product.badge ? '<span class="tag">' + product.badge + '</span>' : ''}
-        <span class="model-badge">৩৬০°</span>
       </a>
       <div class="product-info">
         <h3><a class="product-name" href="${productPath(product.id)}">${product.name}</a></h3>
@@ -132,21 +131,11 @@ function renderDetail() {
   detail.innerHTML = `
     <article class="product-detail">
       <div class="detail-gallery">
-        <div class="gallery-stage">
+        <button class="gallery-stage" id="open-preview" type="button" aria-label="${name} এর ছবি বড় করে দেখুন">
           <img id="detail-photo" src="${imagePath(id)}" alt="${name}" width="508" height="508" fetchpriority="high">
-          <div id="detail-model" class="model-stage" hidden>
-            <canvas id="product-canvas" width="540" height="440" role="img" aria-label="${name}, ঘুরিয়ে দেখার ৩ডি নমুনা"></canvas>
-            <div class="model-controls">
-              <button class="icon-button" type="button" data-rotate="-1" aria-label="বামে ঘোরান">↶</button>
-              <button class="icon-button" type="button" data-rotate="1" aria-label="ডানে ঘোরান">↷</button>
-            </div>
-          </div>
-        </div>
-        <div class="gallery-actions" role="group" aria-label="পণ্য দেখার ধরন">
-          <button class="button secondary" id="view-photo" type="button" aria-pressed="true">পণ্যের ছবি</button>
-          <button class="button secondary" id="view-model" type="button" aria-pressed="false">৩৬০° ঘুরিয়ে দেখুন</button>
-        </div>
-        <p id="model-help" class="pack model-help" role="status">বিভিন্ন দিক দেখতে ‘৩৬০° ঘুরিয়ে দেখুন’ চাপুন।</p>
+          <span class="gallery-zoom">${icon('search')} বড় করে দেখুন</span>
+        </button>
+        <div class="gallery-thumbnails" role="group" aria-label="পণ্যের ছবি বেছে নিন"></div>
       </div>
       <div class="detail-copy">
         <div class="eyebrow"><span></span> পণ্যের বিস্তারিত</div>
@@ -181,28 +170,59 @@ function renderDetail() {
   $('order-product').addEventListener('click', () => orderProduct(id, quantity));
   $('add-product').addEventListener('click', () => addProduct(id, quantity));
 
-  let viewer;
-  function showView(model) {
-    $('detail-photo').hidden = model;
-    $('detail-model').hidden = !model;
-    $('view-photo').setAttribute('aria-pressed', String(!model));
-    $('view-model').setAttribute('aria-pressed', String(model));
-    $('model-help').textContent = model
-      ? 'আঙুল দিয়ে টানুন বা তীর চাপুন। এটি পণ্যের আকৃতি বোঝার জন্য ৩ডি নমুনা।'
-      : 'বিভিন্ন দিক দেখতে ‘৩৬০° ঘুরিয়ে দেখুন’ চাপুন।';
+  setupGallery(id, name);
+}
+
+function setupGallery(id, name) {
+  const photos = [
+    {src:imagePath(id), label:'মূল ছবি'},
+    {src:imagePath(id + '-angle'), label:'অন্য দিক থেকে'},
+    {src:imagePath(id + '-detail'), label:'কাছ থেকে'}
+  ];
+  const main = $('detail-photo');
+  const preview = $('photo-preview');
+  const previewImage = $('preview-photo');
+  const thumbnails = detail.querySelector('.gallery-thumbnails');
+  let selected = 0;
+
+  thumbnails.innerHTML = photos.map(({src, label}, index) => `
+    <button class="gallery-thumb" type="button" aria-label="ছবি ${number(index + 1)} · ${label}" aria-pressed="${index === 0}">
+      <img src="${src}" alt="" width="84" height="70" loading="lazy">
+    </button>`).join('');
+  const buttons = [...thumbnails.querySelectorAll('button')];
+
+  function renderPreview() {
+    previewImage.src = photos[selected].src;
+    previewImage.alt = name + ' · ' + photos[selected].label;
+    $('preview-count').textContent = 'ছবি ' + number(selected + 1) + ' / ' + number(photos.length);
   }
-  $('view-photo').addEventListener('click', () => showView(false));
-  $('view-model').addEventListener('click', () => {
-    showView(true);
-    if (!viewer && typeof mountProductModel === 'function') viewer = mountProductModel($('product-canvas'), id);
-    if (!viewer) {
-      showView(false);
-      $('model-help').textContent = 'এই ডিভাইসে ৩ডি ভিউ চালু করা যায়নি। পণ্যের ছবি দেখতে পারবেন।';
-    }
+
+  function selectPhoto(index) {
+    buttons[selected].setAttribute('aria-pressed', 'false');
+    selected = (index + photos.length) % photos.length;
+    buttons[selected].setAttribute('aria-pressed', 'true');
+    main.src = photos[selected].src;
+    main.alt = name + ' · ' + photos[selected].label;
+    if (preview.open) renderPreview();
+  }
+
+  buttons.forEach((button, index) => button.addEventListener('click', () => selectPhoto(index)));
+  $('open-preview').addEventListener('click', () => {
+    $('photo-preview-title').textContent = name;
+    renderPreview();
+    preview.showModal();
   });
-  detail.querySelectorAll('[data-rotate]').forEach(button => button.addEventListener('click', () => {
-    viewer?.rotate(Number(button.dataset.rotate));
-  }));
+  $('close-preview').addEventListener('click', () => preview.close());
+  $('previous-photo').addEventListener('click', () => selectPhoto(selected - 1));
+  $('next-photo').addEventListener('click', () => selectPhoto(selected + 1));
+  preview.addEventListener('click', event => {
+    if (event.target === preview) preview.close();
+  });
+  preview.addEventListener('keydown', event => {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    event.preventDefault();
+    selectPhoto(selected + (event.key === 'ArrowLeft' ? -1 : 1));
+  });
 }
 
 function subtotal(items = cart) {
