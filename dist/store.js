@@ -113,7 +113,7 @@ function renderProducts() {
         <div class="product-bottom"><span class="price">${money(product.price)}</span><a class="text-button detail-link" href="${productPath(product.id)}">বিস্তারিত</a></div>
         <div class="product-actions">
           <button type="button" class="button primary" data-order="${product.id}" aria-label="${product.name} এখনই অর্ডার করুন">এখনই অর্ডার</button>
-          <button type="button" class="button secondary add-button" data-add="${product.id}" aria-label="${product.name} কার্টে যোগ করুন">${icon('bag')} কার্টে যোগ</button>
+          <button type="button" class="button secondary add-button" data-add="${product.id}" aria-label="${product.name} কার্টে যোগ করুন" title="কার্টে যোগ করুন">${icon('bag')}<span class="add-label">কার্টে যোগ</span></button>
         </div>
       </div>
     </article>`).join('') : '<p class="empty">কোনো পণ্য পাওয়া যায়নি। অন্য শব্দ দিয়ে খুঁজে দেখুন।</p>';
@@ -153,7 +153,7 @@ function renderDetail() {
         <div class="detail-price"><span>পণ্যের মোট</span><strong class="price" id="detail-price">${money(price)}</strong></div>
         <div class="detail-actions">
           <button class="button primary" id="order-product" type="button">এখনই অর্ডার করুন ${icon('left')}</button>
-          <button class="button secondary" id="add-product" type="button">${icon('bag')} কার্টে যোগ করুন</button>
+          <button class="button secondary add-button" id="add-product" type="button" aria-label="কার্টে যোগ করুন">${icon('bag')} কার্টে যোগ</button>
         </div>
         <p class="delivery-note">${icon('truck')} ঠিকানা দেওয়ার সময় ডেলিভারি খরচ দেখানো হবে।</p>
       </div>
